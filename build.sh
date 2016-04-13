@@ -7,7 +7,6 @@ rm -rf collectd.conf.tmpl *.conf install-files.tgz
 for x in collectd-signalfx/10-signalfx.conf collectd-write_http/10-write_http-plugin.conf collectd-aggregation/10-aggregation-cpu.conf collectd/collectd.conf.tmpl collectd-match_regex/filtering.conf; do
 	curl -sSL "https://raw.githubusercontent.com/signalfx/integrations/master/${x}" > `basename $x`
 done
-curl -sSL "https://raw.githubusercontent.com/signalfx/integrations/master/collectd/collectd.conf.tmpl" > collectd.conf.tmpl
 
 tar -cvzf install-files.tgz *.conf collectd.conf.tmpl get_aws_unique_id
 
