@@ -1,0 +1,31 @@
+#!/bin/bash
+
+#
+# get_aws_unique_id: prints a unique id for an AWS instance suitable for use with SignalFx.
+# exits with 0 if the unique id was generated succesfully
+# exits with 1 if the curl for data succeeded but the parsing of the information failed.
+# exits with 28 if there was a timeout talking to AWS to get information
+# all other exit codes come from curl
+#
+DOC="$(curl $insecure -s --connect-timeout 1 http://169.254.169.254/2014-11-05/dynamic/instance-identity/document)"
+status=$?
+if [ $status -eq 0 ]; then
+   eval "$(echo "$DOC" | awk -F: '
+   function print_var(line){
+       split($1, name_parts, "\"")
+       split($2, val_parts, "\"")
+       printf("_%s=%s\n", toupper(name_parts[2]), val_parts[2])
+   }
+   $1~/ *\"accountId\"/{ print_var($0) }
+   $1~/ *\"instanceId\"/{ print_var($0) }
+   $1~/ *\"region\"/{ print_var($0) }
+   ')"
+   
+   if [ ! -z "${_INSTANCEID}" -a ! -z "${_REGION}" -a ! -z "${_ACCOUNTID}" ]; then
+     _AWS_UNIQUE_ID=${_INSTANCEID}_${_REGION}_${_ACCOUNTID}
+     printf "%s" "${_AWS_UNIQUE_ID}" 
+     exit 0
+   fi
+   status=1
+fi
+exit ${status}

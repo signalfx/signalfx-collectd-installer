@@ -1,0 +1,8 @@
+.idea
+signalfx-collectd-installer.iml
+collectd.conf.tmpl
+filtering.conf
+10-write_http-plugin.conf
+10-signalfx.conf
+10-aggregation-cpu.conf
+install-files.tgz
