@@ -8,12 +8,13 @@ You can go non-interactive with
 
 curl -sSL https://dl.signalfx.com/collectd-install | bash -s YOUR_API_TOKEN -y
 
-You can provide your own collectd and just use the script to configure it with
+You can provide your own collectd and just use the script to configure it with.  If it's not in a standard location for collectd you'll want to pass in -C /path/to/collectd in addition.
 
-curl -sSL https://dl.signalfx.com/collectd-install | bash -s YOUR_API_TOKEN --configure-only
+curl -sSL https://dl.signalfx.com/collectd-install | bash -s YOUR_API_TOKEN --configure-only -C /path/to/collectd
 
 Full usage options available:
 
+```
 Usage: collectd-install [ <api_token> ] [ --beta | --test ] [ -H <hostname> ] [ -U <Ingest URL>] [ -h ] [ --insecure ] [ -y ] [ --config-only ] [ -C /path/to/collectd ]
  -y makes the operation non-interactive. api_token is required and defaults to dns if no hostname is set
  -H <hostname> will set the collectd hostname to <hostname> instead of deferring to dns.
@@ -24,3 +25,4 @@ Usage: collectd-install [ <api_token> ] [ --beta | --test ] [ -H <hostname> ] [ 
  --configure-only will use the installed collectd instead of attempting to install and will not install anything new.
  --insecure will use the insecure -k with any curl fetches.
  -h this page.
+ ```
