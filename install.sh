@@ -295,7 +295,7 @@ install_rpm_collectd_procedure() {
 
     #download signalfx rpm for collectd
     printf "Downloading SignalFx RPM %s\n" "$needed_rpm"
-    curl $insecure $needed_rpm -o "$needed_rpm_name"
+    curl -sSL $insecure $needed_rpm -o "$needed_rpm_name"
 
     #install signalfx rpm for collectd
     printf "Installing SignalFx RPM\n"
@@ -537,7 +537,7 @@ install_rpm_plugin_procedure() {
     fi
     #download signalfx plugin rpm for collectd
     printf "Downloading SignalFx plugin RPM\n"
-    curl $insecure $needed_plugin_rpm -o $needed_plugin_rpm_name
+    curl -sSL $insecure $needed_plugin_rpm -o $needed_plugin_rpm_name
 
     #install signalfx rpm for collectd
     printf "Installing SignalFx plugin RPM\n"
