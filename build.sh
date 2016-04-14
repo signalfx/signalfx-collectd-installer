@@ -2,6 +2,8 @@
 
 set -ex
 
+cd $(dirname $0)
+
 rm -rf collectd.conf.tmpl *.conf install-files.tgz
 
 for x in collectd-signalfx/10-signalfx.conf collectd-write_http/10-write_http-plugin.conf collectd-aggregation/10-aggregation-cpu.conf collectd/collectd.conf.tmpl collectd-match_regex/filtering.conf; do
