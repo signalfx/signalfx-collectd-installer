@@ -378,6 +378,7 @@ perform_install_for_os() {
             printf "Install will proceed for %s\n" "$hostOS"
             confirm
             install_rpm_collectd_procedure
+            install_rpm_plugin_procedure
         ;;
         "Amazon Linux AMI"*)
             needed_rpm=$aws_linux
@@ -387,6 +388,7 @@ perform_install_for_os() {
             printf "Install will proceed for %s\n" "$hostOS"
             confirm
             install_rpm_collectd_procedure
+            install_rpm_plugin_procedure
         ;;
         "Ubuntu 15.04"*)
             needed_package_name=software-properties-common
