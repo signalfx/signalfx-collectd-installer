@@ -411,7 +411,7 @@ perform_install_for_os() {
 			# Therefore, we'll need to do configuration and cleanup here. We'll
 			# also explicitly exit so that we don't fall through and try to do
 			# configuration and cleanup again if/when this bug is fixed.
-			configure_collectd
+	    configure_collectd
             rm -rf "$BASE_DIR"
 			exit 0
         ;;
