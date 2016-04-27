@@ -405,6 +405,15 @@ perform_install_for_os() {
             confirm
             install_debian_collectd_procedure
             install_debian_collectd_plugin_procedure
+			
+			# Ubuntu 14.04 has a bug that when this script is piped to bash it
+			# will silently terminate when this install_for_os function returns.
+			# Therefore, we'll need to do configuration and cleanup here. We'll
+			# also explicitly exit so that we don't fall through and try to do
+			# configuration and cleanup again if/when this bug is fixed.
+			configure_collectd
+            rm -rf "$BASE_DIR"
+			exit 0
         ;;
         "Ubuntu 12.04"* | "Ubuntu precise"*)
             needed_package_name=python-software-properties
