@@ -413,7 +413,7 @@ perform_install_for_os() {
 			# configuration and cleanup again if/when this bug is fixed.
 	     configure_collectd
             rm -rf "$BASE_DIR"
-			exit 0
+            exit 0
         ;;
         "Ubuntu 12.04"* | "Ubuntu precise"*)
             needed_package_name=python-software-properties
