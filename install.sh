@@ -464,6 +464,8 @@ perform_install_for_os() {
         printf "Unsupported OS, will not attempt to install plugin\n"
         NO_PLUGIN=1
     fi
+    configure_collectd
+    rm -rf "$BASE_DIR"
 }
 
 vercomp () {
@@ -852,5 +854,3 @@ configure_collectd() {
 parse_args_wrapper "$@"
 determine_os
 [ $skip_install -eq 0 ] && perform_install_for_os
-configure_collectd
-rm -rf "$BASE_DIR"
