@@ -633,7 +633,7 @@ get_collectd_config() {
 	USE_SERVICE_COLLECTD=1
         COLLECTD_ETC="/etc/collectd.d"
         printf "Making /etc/collectd.d ..."
-        mkdir -p ${COLLECTD_ETC};
+        $sudo mkdir -p ${COLLECTD_ETC};
         check_for_err "Success";
     elif [ "$COLLECTD_ETC" == "/etc/collectd" ]; then
         USE_SERVICE_COLLECTD=1
@@ -810,11 +810,11 @@ configure_collectd() {
     fi
 
     printf "Making managed config dir %s ..." "${COLLECTD_MANAGED_CONFIG_DIR}"
-    mkdir -p "${COLLECTD_MANAGED_CONFIG_DIR}"
+    $sudo mkdir -p "${COLLECTD_MANAGED_CONFIG_DIR}"
     check_for_err "Success";
 
     printf "Making managed filtering config dir %s ..." "${COLLECTD_FILTERING_CONFIG_DIR}"
-    mkdir -p "${COLLECTD_FILTERING_CONFIG_DIR}"
+    $sudo mkdir -p "${COLLECTD_FILTERING_CONFIG_DIR}"
     check_for_err "Success";
 
     if [ -e "${COLLECTD_CONFIG}" ]; then
