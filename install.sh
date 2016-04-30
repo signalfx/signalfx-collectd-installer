@@ -633,7 +633,7 @@ get_collectd_config() {
 	USE_SERVICE_COLLECTD=1
         COLLECTD_ETC="/etc/collectd.d"
         printf "Making /etc/collectd.d ..."
-        mkdir -p ${COLLECTD_ETC};
+        $sudo mkdir -p ${COLLECTD_ETC};
         check_for_err "Success";
     elif [ "$COLLECTD_ETC" == "/etc/collectd" ]; then
         USE_SERVICE_COLLECTD=1
@@ -691,13 +691,13 @@ get_source_config() {
 
 install_config(){
     printf "Installing %s ..." "$2"
-    cp "${BASE_DIR}/$1" "${COLLECTD_MANAGED_CONFIG_DIR}"
+    $sudo cp "${BASE_DIR}/$1" "${COLLECTD_MANAGED_CONFIG_DIR}"
     check_for_err "Success"
 }
 
 install_filters() {
     printf "Installing filtering config ..."
-    cp "${BASE_DIR}/filtering.conf" "${COLLECTD_FILTERING_CONFIG_DIR}/"
+    $sudo cp "${BASE_DIR}/filtering.conf" "${COLLECTD_FILTERING_CONFIG_DIR}/"
     check_for_err  "Success"
 }
 
@@ -738,9 +738,9 @@ install_signalfx_plugin() {
     install_plugin_common
 
     printf "Fixing SignalFX plugin configuration ..."
-    sed -e "s#%%%API_TOKEN%%%#${raw_api_token}#g" \
-        -e "s#URL.*#URL \"${sfx_ingest_url}/v1/collectd${EXTRA_DIMS}\"#g" \
-        "${BASE_DIR}/10-signalfx.conf" > "${COLLECTD_MANAGED_CONFIG_DIR}/10-signalfx.conf"
+    $sudo sed -e "s#%%%API_TOKEN%%%#${raw_api_token}#g" \
+              -e "s#URL.*#URL \"${sfx_ingest_url}/v1/collectd${EXTRA_DIMS}\"#g" \
+              "${BASE_DIR}/10-signalfx.conf" | $sudo tee "${COLLECTD_MANAGED_CONFIG_DIR}/10-signalfx.conf"
     check_for_err "Success";
 }
 
@@ -748,10 +748,10 @@ install_write_http_plugin(){
     install_plugin_common
 
     printf "Fixing write_http plugin configuration ..."
-    sed -e "s#%%%API_TOKEN%%%#${raw_api_token}#g" \
-        -e "s#%%%INGEST_HOST%%%#${sfx_ingest_url}#g" \
-	-e "s#%%%EXTRA_DIMS%%%#${EXTRA_DIMS}#g" \
-        "${BASE_DIR}/10-write_http-plugin.conf" > "${COLLECTD_MANAGED_CONFIG_DIR}/10-write_http-plugin.conf"
+    $sudo sed -e "s#%%%API_TOKEN%%%#${raw_api_token}#g" \
+              -e "s#%%%INGEST_HOST%%%#${sfx_ingest_url}#g" \
+	      -e "s#%%%EXTRA_DIMS%%%#${EXTRA_DIMS}#g" \
+              "${BASE_DIR}/10-write_http-plugin.conf" | $sudo tee "${COLLECTD_MANAGED_CONFIG_DIR}/10-write_http-plugin.conf"
     check_for_err "Success";
 }
 
@@ -766,7 +766,7 @@ copy_configs(){
 
 verify_configs(){
     echo "Verifying config"
-    ${COLLECTD} -t
+    $sudo ${COLLECTD} -t
     echo "All good"
 }
 
@@ -810,27 +810,27 @@ configure_collectd() {
     fi
 
     printf "Making managed config dir %s ..." "${COLLECTD_MANAGED_CONFIG_DIR}"
-    mkdir -p "${COLLECTD_MANAGED_CONFIG_DIR}"
+    $sudo mkdir -p "${COLLECTD_MANAGED_CONFIG_DIR}"
     check_for_err "Success";
 
     printf "Making managed filtering config dir %s ..." "${COLLECTD_FILTERING_CONFIG_DIR}"
-    mkdir -p "${COLLECTD_FILTERING_CONFIG_DIR}"
+    $sudo mkdir -p "${COLLECTD_FILTERING_CONFIG_DIR}"
     check_for_err "Success";
 
     if [ -e "${COLLECTD_CONFIG}" ]; then
         printf "Backing up %s: " "${COLLECTD_CONFIG}";
         _bkupname=${COLLECTD_CONFIG}.$(date +"%Y-%m-%d-%T");
-        mv "${COLLECTD_CONFIG}" "${_bkupname}"
+        $sudo mv "${COLLECTD_CONFIG}" "${_bkupname}"
         check_for_err "Success(${_bkupname})";
     fi
     printf "Installing signalfx collectd configuration to %s ... " "${COLLECTD_CONFIG}"
-    sed -e "s#%%%TYPESDB%%%#${TYPESDB}#" \
-        -e "s#%%%SOURCENAMEINFO%%%#${SOURCE_NAME_INFO}#" \
-        -e "s#%%%WRITEQUEUECONFIG%%%#${WRITE_QUEUE_CONFIG}#" \
-        -e "s#%%%COLLECTDMANAGEDCONFIG%%%#${COLLECTD_MANAGED_CONFIG_DIR}#" \
-        -e "s#%%%COLLECTDFILTERINGCONFIG%%%#${COLLECTD_FILTERING_CONFIG_DIR}#" \
-        -e "s#%%%LOGTO%%%#${LOGTO}#" \
-        "${BASE_DIR}/collectd.conf.tmpl" > "${COLLECTD_CONFIG}"
+    $sudo sed -e "s#%%%TYPESDB%%%#${TYPESDB}#" \
+              -e "s#%%%SOURCENAMEINFO%%%#${SOURCE_NAME_INFO}#" \
+              -e "s#%%%WRITEQUEUECONFIG%%%#${WRITE_QUEUE_CONFIG}#" \
+              -e "s#%%%COLLECTDMANAGEDCONFIG%%%#${COLLECTD_MANAGED_CONFIG_DIR}#" \
+              -e "s#%%%COLLECTDFILTERINGCONFIG%%%#${COLLECTD_FILTERING_CONFIG_DIR}#" \
+              -e "s#%%%LOGTO%%%#${LOGTO}#" \
+              "${BASE_DIR}/collectd.conf.tmpl" | $sudo tee "${COLLECTD_CONFIG}"
     check_for_err "Success"
 
     # Install Plugin
@@ -843,18 +843,18 @@ configure_collectd() {
     # Stop running Collectd
     echo "Stopping collectd"
     if [ ${USE_SERVICE_COLLECTD} -eq 1 ]; then
-        service collectd stop
+        $sudo service collectd stop
     else
-        pkill -nx collectd # stops the newest (most recently started) collectd similar to 'service collectd stop'
+        $sudo pkill -nx collectd # stops the newest (most recently started) collectd similar to 'service collectd stop'
     fi
 
     check_with_user_and_stop_other_collectd_instances
 
     echo "Starting collectd"
     if [ ${USE_SERVICE_COLLECTD} -eq 1 ]; then
-        service collectd start
+        $sudo service collectd start
     else
-        ${COLLECTD}
+        $sudo ${COLLECTD}
     fi
 }
 
@@ -864,4 +864,4 @@ parse_args_wrapper "$@"
 determine_os
 [ $skip_install -eq 0 ] && perform_install_for_os
 configure_collectd
-rm -rf "$BASE_DIR"
+$sudo rm -rf "$BASE_DIR"
