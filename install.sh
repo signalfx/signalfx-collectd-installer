@@ -17,28 +17,30 @@ debian_distribution_name=""
 sfx_ingest_url="https://ingest.signalfx.com"
 input_collectd=""
 
-#rpm file variables
-centos_rpm="SignalFx-collectd-RPMs-centos-${stage}-latest.noarch.rpm"
-aws_linux_rpm="SignalFx-collectd-RPMs-AWS_EC2_Linux-${stage}-latest.noarch.rpm"
+set_variables() {
+    #rpm file variables
+    centos_rpm="SignalFx-collectd-RPMs-centos-${stage}-latest.noarch.rpm"
+    aws_linux_rpm="SignalFx-collectd-RPMs-AWS_EC2_Linux-${stage}-latest.noarch.rpm"
 
-#download location variables
-centos="https://dl.signalfx.com/rpms/SignalFx-rpms/${stage}/${centos_rpm}"
-aws_linux="https://dl.signalfx.com/rpms/SignalFx-rpms/${stage}/${aws_linux_rpm}"
+    #download location variables
+    centos="https://dl.signalfx.com/rpms/SignalFx-rpms/${stage}/${centos_rpm}"
+    aws_linux="https://dl.signalfx.com/rpms/SignalFx-rpms/${stage}/${aws_linux_rpm}"
 
-#plugin rpm file variables
-centos_plugin_rpm="SignalFx-collectd_plugin-RPMs-centos-${stage}-latest.noarch.rpm"
-aws_linux_plugin_rpm="SignalFx-collectd_plugin-RPMs-AWS_EC2_Linux-${stage}-latest.noarch.rpm"
+    #plugin rpm file variables
+    centos_plugin_rpm="SignalFx-collectd_plugin-RPMs-centos-${stage}-latest.noarch.rpm"
+    aws_linux_plugin_rpm="SignalFx-collectd_plugin-RPMs-AWS_EC2_Linux-${stage}-latest.noarch.rpm"
 
-#plugin download location variables
-centos_plugin="https://dl.signalfx.com/rpms/SignalFx-rpms/${stage}/${centos_plugin_rpm}"
-aws_linux_plugin="https://dl.signalfx.com/rpms/SignalFx-rpms/${stage}/${aws_linux_plugin_rpm}"
+    #plugin download location variables
+    centos_plugin="https://dl.signalfx.com/rpms/SignalFx-rpms/${stage}/${centos_plugin_rpm}"
+    aws_linux_plugin="https://dl.signalfx.com/rpms/SignalFx-rpms/${stage}/${aws_linux_plugin_rpm}"
 
-signalfx_public_key_id="185894C15AE495F6"
+    signalfx_public_key_id="185894C15AE495F6"
 
-#ppa locations for wheezy and jessie
-signalfx_public_key_id="185894C15AE495F6"
-wheezy_ppa="https://dl.signalfx.com/debs/collectd/wheezy/${stage}"
-jessie_ppa="https://dl.signalfx.com/debs/collectd/jessie/${stage}"
+    #ppa locations for wheezy and jessie
+    signalfx_public_key_id="185894C15AE495F6"
+    wheezy_ppa="https://dl.signalfx.com/debs/collectd/wheezy/${stage}"
+    jessie_ppa="https://dl.signalfx.com/debs/collectd/jessie/${stage}"
+}
 
 usage() {
     echo "Usage: $name [ <api_token> ] [ --beta | --test ] [ -H <hostname> ] [ -U <Ingest URL>] [ -h ] [ --insecure ] [ -y ] [ --config-only ] [ -C /path/to/collectd ]"
@@ -861,6 +863,7 @@ configure_collectd() {
 
 #Determine the OS and install/configure collectd to send metrics to SignalFx
 parse_args_wrapper "$@"
+set_variables
 determine_os
 [ $skip_install -eq 0 ] && perform_install_for_os
 configure_collectd
