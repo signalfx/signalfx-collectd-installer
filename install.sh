@@ -462,7 +462,8 @@ perform_install_for_os() {
                 needed_rpm_name=$centos_rpm
                 needed_plugin_rpm=$centos_plugin
                 needed_plugin_rpm_name=$centos_plugin_rpm
-                printf "Install will proceed for %s\n" "$hostOS"
+                printf "Install will proceed for %s\n" "$hostOS_2"
+                confirm
                 install_rpm_collectd_procedure
                 install_rpm_plugin_procedure
             ;;
