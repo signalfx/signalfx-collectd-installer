@@ -40,6 +40,13 @@ set_variables() {
     signalfx_public_key_id="185894C15AE495F6"
     wheezy_ppa="https://dl.signalfx.com/debs/collectd/wheezy/${stage}"
     jessie_ppa="https://dl.signalfx.com/debs/collectd/jessie/${stage}"
+
+    #mac osx packages
+    osxpkg_name="signalfx-collectd-macosx-install.pkg"
+    osxpkg="https://dl.signalfx.com/osxpkg/collectd/${stage}/pkgs/${osxpkg_name}"
+
+    plugin_osxpkg_name="signalfx-collectd-plugin-macosx-install.pkg"
+    plugin_osxpkg="https://dl.signalfx.com/osxpkg/signalfx-collectd-plugin/${stage}/pkgs/${plugin_osxpkg_name}"
 }
 
 usage() {
@@ -188,14 +195,19 @@ parse_args_wrapper() {
 
 
 determine_os() {
-    #determine hostOS for newer versions of Linux
-    hostOS=$(cat /etc/*-release | grep PRETTY_NAME | grep -o '".*"' | sed 's/"//g' | sed -e 's/([^()]*)//g' | sed -e 's/[[:space:]]*$//')
-    if [ ! -f /etc/redhat-release ]
-        then
-        hostOS_2=null_os
+
+    if [ "$(uname)" == "Darwin" ]; then
+        hostOS="Mac OS X"
     else
-        #older versions of RPM based Linux that don't have version in PRETTY_NAME format
-        hostOS_2=$(head -c 16 /etc/redhat-release)
+        #determine hostOS for newer versions of Linux
+        hostOS=$(cat /etc/*-release | grep PRETTY_NAME | grep -o '".*"' | sed 's/"//g' | sed -e 's/([^()]*)//g' | sed -e 's/[[:space:]]*$//')
+        if [ ! -f /etc/redhat-release ]
+            then
+            hostOS_2=null_os
+        else
+            #older versions of RPM based Linux that don't have version in PRETTY_NAME format
+            hostOS_2=$(head -c 16 /etc/redhat-release)
+        fi
     fi
 }
 
@@ -234,6 +246,10 @@ assign_needed_os() {
         8)
             hostOS="Debian GNU/Linux 8"
         ;;
+        #Mac OSX
+        9)
+            hostOS="Mac OS X"
+        ;;        
         *)
         printf "error occurred. Exiting. Please contact support@signalfx.com\n" && exit 0
         ;;
@@ -266,21 +282,58 @@ get_os_input() {
 	#Ask end user for what OS to install for
 	printf "\nWe were unable to automatically determine the version of Linux you are on!
 Please enter the number of the OS you wish to install for:
-1. RHEL/Centos 7
-2. RHEL/Centos 6.x
-3. Amazon Linux (all versions 2014.09 and newer)
-4. Ubuntu 15.04
-5. Ubuntu 14.04
-6. Ubuntu 12.04
-7. Debian GNU/Linux 7
-8. Debian GNU/Linux 8
-9. Other
-0. Exit
+1.  RHEL/Centos 7
+2.  RHEL/Centos 6.x
+3.  Amazon Linux (all versions 2014.09 and newer)
+4.  Ubuntu 15.04
+5.  Ubuntu 14.04
+6.  Ubuntu 12.04
+7.  Debian GNU/Linux 7
+8.  Debian GNU/Linux 8
+9.  Mac OS X
+10. Other
+0.  Exit
 Enter your Selection: "
 	read -r selection < /dev/tty
 
     validate_os_input
 
+}
+
+#PKG Based Mac OS X Functions
+#Install function for OSXPKG collectd
+install_osxpkg_collectd_procedure() {
+
+    # download signalfx osxpkg for collectd
+    curl -sSL $insecure $osxpkg -o "$osxpkg_name"
+
+    #install signalfx collectd osxpkg
+    printf "Installing SignalFx OS X Collectd Package\n"
+    $sudo installer -pkg $osxpkg_name -target "/"
+    $sudo rm -f "$osxpkg_name"
+
+    # since stock collectd on macosx is not a reality don't install the 
+    # standard collectd.conf but an empty file instead only for the ask of 
+    # configuration/directory discovery
+    if [ ! -d "/etc/collectd" ]; then
+        $sudo mkdir /etc/collectd
+    fi
+       
+    $sudo touch /etc/collectd/collectd.conf
+}
+
+#PKG Based Mac OS X Functions
+#Install function for OSXPKG collectd plugin
+install_osxpkg_plugin_procedure() {
+
+    # download signalfx plugin osxpkg for collectd
+    curl -sSL $insecure $plugin_osxpkg -o "$plugin_osxpkg_name"
+
+    #install signalfx collectd plugin osxpkg
+    printf "Installing SignalFx OS X Collectd Plugin Package\n"
+    $sudo installer -pkg $plugin_osxpkg_name -target "/"
+    $sudo rm -f "$plugin_osxpkg_name"
+    FOUND=1
 }
 
 #RPM Based Linux Functions
@@ -362,6 +415,14 @@ install_debian_collectd_procedure() {
 #take "hostOS" and match it up to OS and assign tasks
 perform_install_for_os() {
     case $hostOS in
+        "Mac OS X")
+            needed_pkg_name="signalfx-collectd-macosx-install.pkg"
+            needed_plugin_pkg_name="signalfx-collectd-plugin-macosx-install.pkg"
+            printf "Install will proceed for %s\n" "$hostOS"
+            confirm
+            install_osxpkg_collectd_procedure
+            install_osxpkg_plugin_procedure
+        ;;        
         "CentOS Linux 7")
             needed_rpm=$centos
             needed_rpm_name=$centos_rpm
@@ -630,9 +691,13 @@ get_collectd_config() {
     else
         echo "Success";
     fi
+
     COLLECTD_ETC=$(dirname "${COLLECTD_CONFIG}")
     USE_SERVICE_COLLECTD=0
-    if [ "$COLLECTD_ETC" == "/etc" ]; then
+    if [ "$hostOS" == "Mac OS X" ]; then
+        COLLECTD_ETC="/etc/collectd"
+        USE_SERVICE_COLLECTD=1
+    elif [ "$COLLECTD_ETC" == "/etc" ]; then
 	USE_SERVICE_COLLECTD=1
         COLLECTD_ETC="/etc/collectd.d"
         printf "Making /etc/collectd.d ..."
@@ -645,7 +710,10 @@ get_collectd_config() {
 	 COLLECTD_MANAGED_CONFIG_DIR=${COLLECTD_ETC}/managed_config
 	 COLLECTD_FILTERING_CONFIG_DIR=${COLLECTD_ETC}/filtering_config
     printf "Getting TypesDB default value ..."
-    if [ -x /usr/bin/strings ]; then
+
+    if [ "$hostOS" == "Mac OS X" ]; then
+        TYPESDB="/usr/local/share/collectd/types.db"
+    elif [ -x /usr/bin/strings ]; then
         TYPESDB=$(strings "${COLLECTD}" | grep /types.db)
     else
         TYPESDB=$(grep -oP -a "/[-_/[:alpha:]0-9]+/types.db\x00" "${COLLECTD}")
@@ -846,7 +914,11 @@ configure_collectd() {
     # Stop running Collectd
     echo "Stopping collectd"
     if [ ${USE_SERVICE_COLLECTD} -eq 1 ]; then
-        $sudo service collectd stop
+        if [ "$hostOS" == "Mac OS X" ]; then
+            $sudo launchctl unload /Library/LaunchDaemons/com.signalfx.collectd.plist 
+        else
+            $sudo service collectd stop
+        fi
     else
         $sudo pkill -nx collectd # stops the newest (most recently started) collectd similar to 'service collectd stop'
     fi
@@ -855,7 +927,11 @@ configure_collectd() {
 
     echo "Starting collectd"
     if [ ${USE_SERVICE_COLLECTD} -eq 1 ]; then
-        $sudo service collectd start
+        if [ "$hostOS" == "Mac OS X" ]; then
+            $sudo launchctl load /Library/LaunchDaemons/com.signalfx.collectd.plist
+        else
+            $sudo service collectd start
+        fi
     else
         $sudo ${COLLECTD}
     fi
