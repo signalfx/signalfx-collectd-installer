@@ -915,7 +915,10 @@ configure_collectd() {
     echo "Stopping collectd"
     if [ ${USE_SERVICE_COLLECTD} -eq 1 ]; then
         if [ "$hostOS" == "Mac OS X" ]; then
-            $sudo launchctl unload /Library/LaunchDaemons/com.signalfx.collectd.plist 
+            RUNNING_COLLECTD_PID=`/bin/launchctl list | grep com.signalfx.collectd | awk '{print $(1)}'`
+            if [ ! -z $RUNNING_COLLECTD_PID ]; then
+                $sudo /bin/launchctl unload /Library/LaunchDaemons/com.signalfx.collectd.plist
+            fi
         else
             $sudo service collectd stop
         fi
@@ -928,7 +931,7 @@ configure_collectd() {
     echo "Starting collectd"
     if [ ${USE_SERVICE_COLLECTD} -eq 1 ]; then
         if [ "$hostOS" == "Mac OS X" ]; then
-            $sudo launchctl load /Library/LaunchDaemons/com.signalfx.collectd.plist
+            $sudo /bin/launchctl load /Library/LaunchDaemons/com.signalfx.collectd.plist
         else
             $sudo service collectd start
         fi
