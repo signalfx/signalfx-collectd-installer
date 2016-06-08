@@ -15,6 +15,7 @@ insecure=""
 name=collectd-install
 debian_distribution_name=""
 sfx_ingest_url="https://ingest.signalfx.com"
+dimensions=""
 input_collectd=""
 
 set_variables() {
@@ -50,11 +51,12 @@ set_variables() {
 }
 
 usage() {
-    echo "Usage: $name [ <api_token> ] [ --beta | --test ] [ -H <hostname> ] [ -U <Ingest URL>] [ -h ] [ --insecure ] [ -y ] [ --config-only ] [ -C /path/to/collectd ]"
+    echo "Usage: $name [ <api_token> ] [ --beta | --test ] [ -H <hostname> ] [ -U <Ingest URL>] [ -h ] [ --insecure ] [ -y ] [ --config-only ] [ -C /path/to/collectd ] [ -D 'sfxdim_<key>=<value>' ]"
     echo " -y makes the operation non-interactive. api_token is required and defaults to dns if no hostname is set"
     echo " -H <hostname> will set the collectd hostname to <hostname> instead of deferring to dns."
     echo " -U <Ingest URL> will be used as the ingest url. Defaults to ${sfx_ingest_url}"
     echo " -C /path/to/collectd to use that collectd, this will still install the plugin if it is not already installed."
+    echo " -D 'sfxdim_<key>=<value>[&sfxdim_<key>=<value>]' will be added as dimensions to the ingested metrics."
     echo " --beta will use the beta repos instead of release."
     echo " --test will use the test repos instead of release."
     echo " --configure-only will use the installed collectd instead of attempting to install and will not install anything new."
@@ -109,6 +111,9 @@ parse_args(){
            -U)
               [ -z "$2" ] && echo "Argument required for Ingest URL parameter." && usage -1
               export sfx_ingest_url="$2"; shift 2 ;;
+           -D)
+              [ -z "$2" ] && echo "Argument requred for dimensions to be added." && usage -1
+              export dimensions="$2"; shift 2 ;;
            -h)
                usage 0; ;;
            \?) echo "Invalid option: -$1" >&2;
@@ -249,7 +254,7 @@ assign_needed_os() {
         #Mac OSX
         9)
             hostOS="Mac OS X"
-        ;;        
+        ;;
         *)
         printf "error occurred. Exiting. Please contact support@signalfx.com\n" && exit 0
         ;;
@@ -312,13 +317,13 @@ install_osxpkg_collectd_procedure() {
     $sudo installer -pkg $osxpkg_name -target "/"
     $sudo rm -f "$osxpkg_name"
 
-    # since stock collectd on macosx is not a reality don't install the 
-    # standard collectd.conf but an empty file instead only for the ask of 
+    # since stock collectd on macosx is not a reality don't install the
+    # standard collectd.conf but an empty file instead only for the ask of
     # configuration/directory discovery
     if [ ! -d "/etc/collectd" ]; then
         $sudo mkdir /etc/collectd
     fi
-       
+
     $sudo touch /etc/collectd/collectd.conf
 }
 
@@ -422,7 +427,7 @@ perform_install_for_os() {
             confirm
             install_osxpkg_collectd_procedure
             install_osxpkg_plugin_procedure
-        ;;        
+        ;;
         "CentOS Linux 7")
             needed_rpm=$centos
             needed_rpm_name=$centos_rpm
@@ -760,7 +765,7 @@ get_source_config() {
 
 }
 
-install_config(){
+install_config() {
     printf "Installing %s ..." "$2"
     $sudo cp "${BASE_DIR}/$1" "${COLLECTD_MANAGED_CONFIG_DIR}"
     check_for_err "Success"
@@ -785,6 +790,19 @@ check_for_aws() {
     AWS_DONE=1
 }
 
+check_for_dimensions() {
+    [ -n "$DIM_DONE" ] && return
+    if [ -n "$dimensions" ]; then
+        if [ -n "$EXTRA_DIMS" ]; then
+            EXTRA_DIMS="${EXTRA_DIMS}&${dimensions}"
+        else
+            EXTRA_DIMS="?${dimensions}"
+        fi
+        EXTRA_DIMS=$(echo $EXTRA_DIMS | sed 's/&/\\&/g')
+    fi
+    DIM_DONE=1
+}
+
 install_plugin_common() {
     if [ -z "$raw_api_token" ]; then
        if [ -z "${SFX_USER}" ]; then
@@ -800,6 +818,7 @@ install_plugin_common() {
        fi
     fi
     check_for_aws
+    check_for_dimensions
 }
 
 install_signalfx_plugin() {
