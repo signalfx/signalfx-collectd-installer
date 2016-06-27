@@ -198,6 +198,12 @@ parse_args_wrapper() {
     export sudo
 }
 
+check_for_running_collectd(){
+    count_running_collectd_instances=$(pgrep -x collectd | wc -l)
+    if [ "$count_running_collectd_instances" -ne 0 ]; then
+        printf "Note: ** collectd is already running on this machine **\n"
+    fi
+}
 
 determine_os() {
 
@@ -964,6 +970,7 @@ configure_collectd() {
 parse_args_wrapper "$@"
 set_variables
 determine_os
+check_for_running_collectd
 [ $skip_install -eq 0 ] && perform_install_for_os
 configure_collectd
 $sudo rm -rf "$BASE_DIR"
