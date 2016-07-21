@@ -26,3 +26,7 @@ Usage: collectd-install [ <api_token> ] [ --beta | --test ] [ -H <hostname> ] [ 
  --insecure will use the insecure -k with any curl fetches.
  -h this page.
  ```
+ 
+ ##### Note: Uninstalling from Mac OS X systems
+
+ When the install script installs the SignalFx collectd agent on a Mac OS X system, an `uninstall.sh` script is laid down in the directory `/usr/local/share/collectd`. Run this script with administrative privileges to remove collectd and all related configuration from the host. Run the script with `–help` option for detailed instructions, including how to perform a dry run and keep configuration in place after uninstalling.
