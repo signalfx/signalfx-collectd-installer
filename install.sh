@@ -942,6 +942,14 @@ configure_collectd() {
               "${BASE_DIR}/collectd.conf.tmpl" | $sudo tee "${COLLECTD_CONFIG}"
     check_for_err "Success"
 
+    if [ "$hostOS" == "Mac OS X" ]; then
+        echo "disable the plugins and configs that are not used on Mac OS X."
+        $sudo sed -i '' 's/^LoadPlugin cpufreq/#LoadPlugin cpufreq/' ${COLLECTD_CONFIG}
+        $sudo sed -i '' 's/^LoadPlugin protocols/#LoadPlugin protocols/' ${COLLECTD_CONFIG}
+        # the writequeue config line contains all 3 configurations as the newlines fail on mac sed
+        $sudo sed -i '' 's/^WriteQueueLimitHigh/#WriteQueueLimitHigh/' ${COLLECTD_CONFIG}
+    fi
+
     # Install Plugin
     install_signalfx_plugin
 
