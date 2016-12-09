@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Put system paths in front in case people have things like GNU coreutils installed
+# at the front of their PATH on Mac.
+export PATH="/bin:/usr/bin:/sbin:/usr/sbin:$PATH"
+
 #variables used
 selection=0
 needed_rpm=null_rpm_link
@@ -9,6 +13,7 @@ needed_package_name=null_package_name
 stage=release
 interactive=1
 skip_install=0
+skip_time_sync_check=0
 test_files=""
 source_type=""
 insecure=""
@@ -17,6 +22,16 @@ debian_distribution_name=""
 sfx_ingest_url="https://ingest.signalfx.com"
 dimensions=""
 input_collectd=""
+# Number of seconds system clock can be out of sync from NTP server.
+time_sync_max_drift=10
+
+is_mac() {
+    [ "$(uname)" == "Darwin" ]
+}
+
+is_linux() {
+    [ "$(uname)" == "Linux" ]
+}
 
 set_variables() {
     #rpm file variables
@@ -61,6 +76,7 @@ usage() {
     echo " --test will use the test repos instead of release."
     echo " --configure-only will use the installed collectd instead of attempting to install and will not install anything new."
     echo " --insecure will use the insecure -k with any curl fetches."
+    echo " --skip-time-sync-check will skip check for whether the system time is synchronized."
     echo " -h this page."
     exit "$1"
 }
@@ -99,6 +115,9 @@ parse_args(){
               shift 1 ;;
            --configure-only)
               export skip_install=1
+              shift 1 ;;
+           --skip-time-sync-check)
+              export skip_time_sync_check=1
               shift 1 ;;
            -H)
               [ -z "$2" ] && echo "Argument required for hostname parameter." && usage -1
@@ -205,9 +224,79 @@ check_for_running_collectd(){
     fi
 }
 
+check_time_ntp() {
+    local output
+
+    if which ntpdate > /dev/null; then
+        output="$(ntpdate -q -t 2 pool.ntp.org 2> /dev/null)"
+        if [ $? -eq 0 ]; then
+            # Parse output to see what the drift is. We have to do this in awk
+            # because bash doesn't natively handle floating point.
+            if echo "$output" | awk -v max_drift=$time_sync_max_drift "{
+                if (!/step time server .+ offset/ || NF != 11)
+                    next
+
+                if ($$10 > max_drift || $$10 < -max_drift)
+                    exit 1
+                else
+                    exit 0
+            }"; then
+                return 0
+            else
+                return 1
+            fi
+        else
+            echo "ntpdate run failed, skipping NTP time sync check."
+            return 1
+        fi
+    else
+        echo "ntpdate not found, skipping NTP time sync check."
+        return 1
+    fi
+}
+
+check_time_curl() {
+    printf "Getting current time from SignalFx ..."
+    local sfx_time
+    sfx_time=$(curl -sI $insecure $sfx_ingest_url)
+    check_for_err "Success"
+    sfx_time=$(echo "$sfx_time" | grep "^Date: " | cut -d " "  -f 2- | tr -d '\r\n')
+
+    if is_mac; then
+        sfx_time=$(date -j -f "%a, %d %b %Y %H:%M:%S %Z" "$sfx_time" +%s)
+    else
+        sfx_time=$(date -d "$sfx_time" +%s)
+    fi
+
+    local current_time=$(date +%s)
+    local time_diff=$(( $sfx_time - $current_time ))
+    # Take absolute value so it compares both future and present times.
+    time_diff=${time_diff#-}
+
+    if [ $time_diff -gt $time_sync_max_drift ]; then
+        echo "Local time and SignalFx time differs by $time_diff seconds (max $time_sync_max_drift)."
+        return 1
+    fi
+}
+
+check_time_in_sync() {
+    if [ "$skip_time_sync_check" -eq 1 ]; then
+        echo "Skipping time sync check."
+        return
+    fi
+
+    echo "Checking if time is in sync ..."
+
+    if ! check_time_ntp && ! check_time_curl; then
+        echo "Time sync check failed. Please configure NTP and ensure time is "
+        echo "in sync or rerun with --skip-time-sync-check."
+        exit 1
+    fi
+}
+
 determine_os() {
 
-    if [ "$(uname)" == "Darwin" ]; then
+    if is_mac; then
         hostOS="Mac OS X"
     else
         #determine hostOS for newer versions of Linux
@@ -990,6 +1079,7 @@ configure_collectd() {
 #Determine the OS and install/configure collectd to send metrics to SignalFx
 parse_args_wrapper "$@"
 set_variables
+check_time_in_sync
 determine_os
 check_for_running_collectd
 [ $skip_install -eq 0 ] && perform_install_for_os
