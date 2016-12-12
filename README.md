@@ -15,7 +15,7 @@ curl -sSL https://dl.signalfx.com/collectd-install | bash -s YOUR_API_TOKEN --co
 Full usage options available:
 
 ```
-Usage: collectd-install [ <api_token> ] [ --beta | --test ] [ -H <hostname> ] [ -U <Ingest URL>] [ -h ] [ --insecure ] [ -y ] [ --config-only ] [ -C /path/to/collectd ]
+Usage: collectd-install [ <api_token> ] [ --beta | --test ] [ -H <hostname> ] [ -U <Ingest URL>] [ -h ] [ --insecure ] [ -y ] [ --configure-only ] [ -C /path/to/collectd ]
  -y makes the operation non-interactive. api_token is required and defaults to dns if no hostname is set
  -H <hostname> will set the collectd hostname to <hostname> instead of deferring to dns.
  -U <Ingest URL> will be used as the ingest url. Defaults to https://ingest.signalfx.com
