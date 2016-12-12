@@ -66,7 +66,7 @@ set_variables() {
 }
 
 usage() {
-    echo "Usage: $name [ <api_token> ] [ --beta | --test ] [ -H <hostname> ] [ -U <Ingest URL>] [ -h ] [ --insecure ] [ -y ] [ --config-only ] [ -C /path/to/collectd ] [ -D 'sfxdim_<key>=<value>' ]"
+    echo "Usage: $name [ <api_token> ] [ --beta | --test ] [ -H <hostname> ] [ -U <Ingest URL>] [ -h ] [ --insecure ] [ -y ] [ --configure-only ] [ -C /path/to/collectd ] [ -D 'sfxdim_<key>=<value>' ]"
     echo " -y makes the operation non-interactive. api_token is required and defaults to dns if no hostname is set"
     echo " -H <hostname> will set the collectd hostname to <hostname> instead of deferring to dns."
     echo " -U <Ingest URL> will be used as the ingest url. Defaults to ${sfx_ingest_url}"
