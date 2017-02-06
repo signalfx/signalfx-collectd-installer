@@ -449,9 +449,12 @@ install_rpm_collectd_procedure() {
         echo "Using collectd at '$input_collectd' instead of installing it"
         return
     fi
+
+    yum_flags="-y"
+
     #install deps
     printf "Installing Dependencies\n"
-    $sudo yum -y install $needed_deps
+    $sudo yum $yum_flags install $needed_deps
 
     #download signalfx rpm for collectd
     printf "Downloading SignalFx RPM %s\n" "$needed_rpm"
@@ -459,17 +462,23 @@ install_rpm_collectd_procedure() {
 
     #install signalfx rpm for collectd
     printf "Installing SignalFx RPM\n"
-    $sudo yum -y install $needed_rpm_name
+    $sudo yum $yum_flags install $needed_rpm_name
     $sudo rm -f $needed_rpm_name
     type setsebool > /dev/null 2>&1 && $sudo setsebool -P collectd_tcp_network_connect on
 
+    #disable epel repo if it is enabled on host
+    EPEL_REPO=$($sudo yum repolist enabled | grep "epel/x86_64")
+    if [ -n "$EPEL_REPO" ]; then
+        yum_flags="$yum_flags --disablerepo=epel"
+    fi
+
     #install collectd from signalfx rpm
     printf "Installing collectd\n"
-    $sudo yum --disablerepo=epel -y install collectd
+    $sudo yum $yum_flags install collectd
 
     #install base plugins signalfx deems necessary
     printf "Installing base-plugins\n"
-    $sudo yum --disablerepo=epel -y install collectd-disk collectd-write_http
+    $sudo yum $yum_flags install collectd-disk collectd-write_http
 }
 
 #Debian Based Linux Functions
