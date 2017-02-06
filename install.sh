@@ -465,11 +465,11 @@ install_rpm_collectd_procedure() {
 
     #install collectd from signalfx rpm
     printf "Installing collectd\n"
-    $sudo yum -y install collectd
+    $sudo yum --disablerepo=epel -y install collectd
 
     #install base plugins signalfx deems necessary
     printf "Installing base-plugins\n"
-    $sudo yum -y install collectd-disk collectd-write_http
+    $sudo yum --disablerepo=epel -y install collectd-disk collectd-write_http
 }
 
 #Debian Based Linux Functions
