@@ -34,7 +34,7 @@ def main():
     else:
         parser = OptionParser('%prog [options] user_name', description=description)
 
-    parser.add_argument('--url', default='https://api.signalfx.com/v2', help='SignalFX endpoint')
+    parser.add_argument('--url', default='https://api.signalfx.com/v1', help='SignalFX endpoint')
     parser.add_argument('--password', default=None, help='Optional command line password')
     parser.add_argument('--org', default=None,
                         help='If set, change output to only the auth token of this org')
