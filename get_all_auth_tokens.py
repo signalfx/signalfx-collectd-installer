@@ -2,6 +2,7 @@ import getpass
 import os
 import re
 import urllib
+import sys
 
 
 try:
@@ -23,18 +24,17 @@ except ImportError:
     from optparse import OptionParser
     OptionParser.add_argument = OptionParser.add_option
     have_argparse = False
-import sys
 
 
 def main():
     description = 'Helper script that gives you all the access tokens your account has.'
     if have_argparse:
         parser = argparse.ArgumentParser(description=description,
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+                                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     else:
         parser = OptionParser('%prog [options] user_name', description=description)
 
-    parser.add_argument('--url', default='https://api.signalfx.com/v1', help='SignalFX endpoint')
+    parser.add_argument('--url', default='https://api.signalfx.com/v2', help='SignalFX endpoint')
     parser.add_argument('--password', default=None, help='Optional command line password')
     parser.add_argument('--org', default=None,
                         help='If set, change output to only the auth token of this org')
@@ -44,7 +44,7 @@ def main():
                         help='If set, will look for a collectd file and auto update to the auth token you select.')
     parser.add_argument('--print_token_only', default=False, action='store_true',
                         help='If set, only print out tokens')
-    parser.add_argument('--error_on_multiple', default=False, action ='store_true',
+    parser.add_argument('--error_on_multiple', default=False, action='store_true',
                         help='If set then an error will be raised if the user is part of multiple organizations '
                              'and --org is not specified')
 
@@ -65,32 +65,13 @@ def main():
     if args.password is None:
         args.password = getpass.getpass('SignalFX password: ')
 
-    # Get the session
-    json_payload = {"email": args.user_name, "password": args.password}
-    headers = {'content-type': 'application/json'}
-    req = urllib2.Request(args.url + "/session", json.dumps(json_payload), headers)
-    try:
-        resp = urllib2.urlopen(req)
-    except urllib2.HTTPError, e:
-        if e.code == 201:
-            resp = e
-        else:
-            sys.stderr.write("Invalid user name/password\n")
-            sys.exit(1)
-    res = resp.read()
-    sf_accessToken = json.loads(res)['sf_accessToken']
-    sf_userID = json.loads(res)['sf_userID']
-
-    # Get the orgs
-    orgs_url = args.url + "/organization?query=sf_organization:%s" % (urllib.quote(args.org or '*'))
-    headers = {'content-type': 'application/json', 'X-SF-TOKEN': sf_accessToken}
-    req = urllib2.Request(orgs_url, headers=headers)
-    resp = urllib2.urlopen(req)
-    res = resp.read()
-    all_res = json.loads(res)
+    access_token = get_access_token(args.user_name, args.password, args.url)
+    user_orgs = get_user_org_membership(args.url, access_token)
     all_auth_tokens = []
-    for i in all_res['rs']:
-        all_auth_tokens.append((i['sf_organization'], i['sf_apiAccessToken']))
+    for org in user_orgs:
+        org_access_token = get_org_specific_access_token(access_token, args.url, org)
+        token_info = get_org_api_token(args.url, org_access_token)
+        all_auth_tokens.append(token_info)
 
     if args.org is not None:
         for org_name, api_token in all_auth_tokens:
@@ -121,6 +102,51 @@ def main():
         sys.exit(1)
 
     replace_in_file(args.update, 'APIToken "(.*)"', 'APIToken "%s"' % all_auth_tokens[0][1])
+
+
+def make_request(endpoint_url, access_token=None, json_payload=None):
+    if access_token is not None:
+        headers = {'content-type': 'application/json', 'X-SF-TOKEN': access_token}
+    else:
+        headers = {'content-type': 'application/json'}
+
+    if json_payload is not None:
+        req = urllib2.Request(endpoint_url, json.dumps(json_payload), headers=headers)
+    else:
+        req = urllib2.Request(endpoint_url, headers=headers)
+
+    try:
+        resp = urllib2.urlopen(req)
+        res = resp.read()
+    except urllib2.HTTPError, e:
+        sys.stderr.write("http request failed - %s\n" % e)
+        sys.exit(1)
+    return json.loads(res)
+
+
+def get_access_token(username, password, base_url):
+    session_url = '{0}/session'.format(base_url)
+    payload = {'email': username, 'password': password}
+    res = make_request(session_url, None, payload)
+    return res['accessToken']
+
+
+def get_org_specific_access_token(access_token, base_url, org_id):
+    session_url = '{0}/session/{1}'.format(base_url, org_id)
+    res = make_request(session_url, access_token, {})
+    return res['accessToken']
+
+
+def get_user_org_membership(base_url, access_token):
+    user_url = '{0}/user'.format(base_url)
+    res = make_request(user_url, access_token, None)
+    return res["organizations"]
+
+
+def get_org_api_token(base_url, access_token):
+    org_url = '{0}/organization'.format(base_url)
+    res = make_request(org_url, access_token, None)
+    return (res['organizationName'], res['apiAccessToken'])
 
 
 def decode_string(str_to_decode):
