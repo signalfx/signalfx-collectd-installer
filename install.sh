@@ -928,7 +928,10 @@ install_plugin_common() {
                read -r -p "Invalid input. Input SignalFx user name: " SFX_USER < /dev/tty
            done
        fi
-       raw_api_token=$(python "${BASE_DIR}/get_all_auth_tokens.py" --print_token_only --error_on_multiple "${SFX_API}" "${SFX_ORG}" "${SFX_USER}")
+       if [ -n "$SFX_ORG" ]; then
+           auth_args="--org=$SFX_ORG"
+       fi
+       raw_api_token=$(python "${BASE_DIR}/get_all_auth_tokens.py" --print_token_only --error_on_multiple ${auth_args} "${SFX_USER}")
        if [ -z "$raw_api_token" ]; then
           echo "Failed to get SignalFx API token";
           exit "2";
