@@ -350,8 +350,12 @@ assign_needed_os() {
         9)
             hostOS="Debian GNU/Linux 8"
         ;;
-        #Mac OSX
+        #CoreOS
         10)
+            hostOS="CoreOS"
+        ;;
+        #Mac OSX
+        11)
             hostOS="Mac OS X"
         ;;
         *)
@@ -362,10 +366,10 @@ assign_needed_os() {
 
 #Validate the users input
 validate_os_input() {
-if [[ "$selection" =~ ^[0-9]+$ ]] && [[ "$selection" -ge 1 && "$selection" -le 10 ]]
+if [[ "$selection" =~ ^[0-9]+$ ]] && [[ "$selection" -ge 1 && "$selection" -le 11 ]]
     then
         assign_needed_os
-elif [ "$selection" == 11 ];
+elif [ "$selection" == 12 ];
     then
         printf "\nWe currently do not support any other Linux distribution with our collectd packages.
 Please visit https://support.signalfx.com/hc/en-us/articles/201094025-Use-collectd for detailed
@@ -374,7 +378,7 @@ elif [ "$selection" == 0 ];
     then
         printf "\nGood Bye!" && exit 0
 else
-    printf "\nInvalid user input please make a Distribution selection of 1 through 8.
+    printf "\nInvalid user input please make a Distribution selection of 1 through 11.
 Enter your Selection: "
     read -r selection < /dev/tty
     validate_os_input
@@ -395,14 +399,27 @@ Please enter the number of the OS you wish to install for:
 7.  Ubuntu 12.04
 8.  Debian GNU/Linux 7
 9.  Debian GNU/Linux 8
-10. Mac OS X
-11. Other
+10. CoreOS (default collectd container)
+11. Mac OS X
+12. Other
 0.  Exit
 Enter your Selection: "
 	read -r selection < /dev/tty
 
     validate_os_input
 
+}
+#Install wrapper for default collectd docker container
+install_coreospkg_collectd_procedure() {
+    docker run --privileged \
+    --net="host" \
+    -e "SF_API_TOKEN=$raw_api_token" \
+    -v /etc/hostname:/mnt/hostname:ro \
+    -v /proc:/mnt/proc:ro \
+    -v /:/hostfs:ro \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v /etc:/mnt/etc:ro \
+    quay.io/signalfuse/collectd
 }
 
 #PKG Based Mac OS X Functions
@@ -529,6 +546,11 @@ install_debian_collectd_procedure() {
 #take "hostOS" and match it up to OS and assign tasks
 perform_install_for_os() {
     case $hostOS in
+        "CoreOS")
+            printf "Install will proceed for %s\n" "$hostOS"
+            confirm
+            install_coreospkg_collectd_procedure
+        ;;
         "Mac OS X")
             needed_pkg_name="signalfx-collectd-macosx-install.pkg"
             needed_plugin_pkg_name="signalfx-collectd-plugin-macosx-install.pkg"
@@ -1095,5 +1117,5 @@ check_time_in_sync
 determine_os
 check_for_running_collectd
 [ $skip_install -eq 0 ] && perform_install_for_os
-configure_collectd
-$sudo rm -rf "$BASE_DIR"
+echo [ "$hostOS" != "CoreOS" ]
+[ "$hostOS" != "CoreOS" ] && configure_collectd && $sudo rm -rf "$BASE_DIR"
