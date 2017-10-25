@@ -902,9 +902,22 @@ check_for_aws() {
         printf "Using AWSUniqueId: %s\n" "${AWS_UNIQUE_ID}"
         EXTRA_DIMS="?sfxdim_AWSUniqueId=${AWS_UNIQUE_ID}"
     else
-        printf "Not IN AWS\n"
+        printf "NOT in AWS\n"
     fi
     AWS_DONE=1
+}
+
+check_for_gcp() {
+    [ -n "$GCP_DONE" ] && return
+    printf "Checking to see if this box is in Google Compute Engine: "
+    GCP_UNIQUE_ID=$("${BASE_DIR}/get_gcp_unique_id") || true
+    if [ -n "$GCP_UNIQUE_ID" ]; then
+        printf "Using gcp_id: %s\n" "${GCP_UNIQUE_ID}"
+        EXTRA_DIMS="?sfxdim_gcp_id=${GCP_UNIQUE_ID}"
+    else
+        printf "NOT in Google Compute Engine\n"
+    fi
+    GCP_DONE=1
 }
 
 check_for_dimensions() {
@@ -938,6 +951,7 @@ install_plugin_common() {
        fi
     fi
     check_for_aws
+    check_for_gcp
     check_for_dimensions
 }
 

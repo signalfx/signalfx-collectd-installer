@@ -1,0 +1,34 @@
+#!/bin/bash
+
+set -e
+
+# Outputs a GCP unique ID for the GCP compute instance on which this script
+# is run.  Should exit non-zero if the host is not a GCP instance.
+
+# Exits with:
+#  0 if a GCP ID was determined successfully
+#  2 if one of the required metadata values is missing
+#  6 if the metadata request failed (most likely the host isn't running in GCP)
+#  22 if the metadata request returned a non-200 response (most likey we don't have permissions to access metadata)
+#  28 if the metadata request timed out for some reason
+
+getMetadata() {
+  local path=$1
+
+  output=$(curl $insecure --fail --connect-timeout 1 -s -H'Metadata-Flavor:Google' http://metadata.google.internal/computeMetadata/v1/$path)
+  status=$?
+  if [ $status -ne 0 ]; then
+      exit $status
+  fi
+
+  if [ -z $output ]; then
+    exit 2
+  fi
+
+  printf "%s" $output
+}
+
+project_id=$(getMetadata project/project-id)
+instance_id=$(getMetadata instance/id)
+printf "%s_%s" "$project_id" "$instance_id"
+exit 0
