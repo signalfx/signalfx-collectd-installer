@@ -902,7 +902,7 @@ check_for_aws() {
         printf "Using AWSUniqueId: %s\n" "${AWS_UNIQUE_ID}"
         EXTRA_DIMS="?sfxdim_AWSUniqueId=${AWS_UNIQUE_ID}"
     else
-        printf "Not IN AWS\n"
+        printf "NOT in AWS\n"
     fi
     AWS_DONE=1
 }
@@ -915,7 +915,7 @@ check_for_gcp() {
         printf "Using gcp_id: %s\n" "${GCP_UNIQUE_ID}"
         EXTRA_DIMS="?sfxdim_gcp_id=${GCP_UNIQUE_ID}"
     else
-        printf "Not IN Google Compute Engine\n"
+        printf "NOT in Google Compute Engine\n"
     fi
     GCP_DONE=1
 }
