@@ -52,10 +52,11 @@ set_variables() {
 
     signalfx_public_key_id="185894C15AE495F6"
 
-    #ppa locations for wheezy and jessie
+    #ppa locations for wheezy, jessie, and stretch
     signalfx_public_key_id="185894C15AE495F6"
     wheezy_ppa="https://dl.signalfx.com/debs/collectd/wheezy/${stage}"
     jessie_ppa="https://dl.signalfx.com/debs/collectd/jessie/${stage}"
+    stretch_ppa="https://dl.signalfx.com/debs/collectd/stretch/${stage}"
 
     #mac osx packages
     osxpkg_name="signalfx-collectd-macosx-install.pkg"
@@ -350,8 +351,12 @@ assign_needed_os() {
         9)
             hostOS="Debian GNU/Linux 8"
         ;;
-        #Mac OSX
+        #Debian GNU/Linux 8 (stretch)
         10)
+            hostOS="Debian GNU/Linux 9"
+        ;;
+        #Mac OSX
+        11)
             hostOS="Mac OS X"
         ;;
         *)
@@ -395,8 +400,9 @@ Please enter the number of the OS you wish to install for:
 7.  Ubuntu 12.04
 8.  Debian GNU/Linux 7
 9.  Debian GNU/Linux 8
-10. Mac OS X
-11. Other
+10. Debian GNU/Linux 9
+11. Mac OS X
+12. Other
 0.  Exit
 Enter your Selection: "
 	read -r selection < /dev/tty
@@ -507,7 +513,7 @@ install_debian_collectd_procedure() {
     else
         #Adding signalfx repo
         printf "Getting SignalFx collectd package\n"
-        if [ "$debian_distribution_name" == "wheezy" ] || [ "$debian_distribution_name" == "jessie" ]; then
+        if [ "$debian_distribution_name" == "wheezy" ] || [ "$debian_distribution_name" == "jessie" ] || [ "$debian_distribution_name" == "stretch" ]; then
             $sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys $signalfx_public_key_id
             echo "deb ${repo_link} /" | $sudo tee /etc/apt/sources.list.d/signalfx_collectd.list > /dev/null
         else
@@ -624,6 +630,15 @@ perform_install_for_os() {
             printf "Install will proceed for %s\n" "$hostOS"
             repo_link=$jessie_ppa
             debian_distribution_name="jessie"
+            confirm
+            install_debian_collectd_procedure
+            install_debian_collectd_plugin_procedure
+        ;;
+        "Debian GNU/Linux 9")
+            needed_package_name="apt-transport-https"
+            printf "Install will proceed for %s\n" "$hostOS"
+            repo_link=$stretch_ppa
+            debian_distribution_name="stretch"
             confirm
             install_debian_collectd_procedure
             install_debian_collectd_plugin_procedure
@@ -768,7 +783,7 @@ install_debian_collectd_plugin_procedure() {
     else
         #Adding signalfx repo
         printf "Getting SignalFx collectd package\n"
-        if [ "$debian_distribution_name" == "wheezy" ] || [ "$debian_distribution_name" == "jessie" ]; then
+        if [ "$debian_distribution_name" == "wheezy" ] || [ "$debian_distribution_name" == "jessie" ] || [ "$debian_distribution_name" == "stretch" ]; then
             $sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys $signalfx_public_key_id
             echo "deb ${repo_link} /" | $sudo tee /etc/apt/sources.list.d/signalfx_collectd_plugin-${stage}-${debian_distribution_name}.list > /dev/null
         else
