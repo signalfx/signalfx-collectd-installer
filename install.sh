@@ -50,8 +50,6 @@ set_variables() {
     centos_plugin="https://dl.signalfx.com/rpms/SignalFx-rpms/${stage}/${centos_plugin_rpm}"
     aws_linux_plugin="https://dl.signalfx.com/rpms/SignalFx-rpms/${stage}/${aws_linux_plugin_rpm}"
 
-    signalfx_public_key_id="185894C15AE495F6"
-
     #ppa locations for wheezy, jessie, and stretch
     signalfx_public_key_id="185894C15AE495F6"
     wheezy_ppa="https://dl.signalfx.com/debs/collectd/wheezy/${stage}"
@@ -514,6 +512,11 @@ install_debian_collectd_procedure() {
         #Adding signalfx repo
         printf "Getting SignalFx collectd package\n"
         if [ "$debian_distribution_name" == "wheezy" ] || [ "$debian_distribution_name" == "jessie" ] || [ "$debian_distribution_name" == "stretch" ]; then
+            if [ "$(which gpg)" == "" ] && [ "$(which gpg2)" == "" ]; then
+              printf "You must have gpg or gpg2 installed to add the SignalFx repo keys\n"
+              exit 9
+            fi
+
             $sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys $signalfx_public_key_id
             echo "deb ${repo_link} /" | $sudo tee /etc/apt/sources.list.d/signalfx_collectd.list > /dev/null
         else
