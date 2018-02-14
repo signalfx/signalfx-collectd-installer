@@ -1,0 +1,36 @@
+#!/bin/bash
+
+#
+# get_azure_unique_id: prints a unique id for an Azure VM suitable for use with SignalFx.
+# exits with 0 if the unique id was generated succesfully
+# exits with 1 if the curl for data succeeded but the parsing of the information failed.
+# exits with 28 if there was a timeout talking to AWS to get information
+# all other exit codes come from curl
+#
+
+jsonval () {
+    temp=`echo $json | sed 's/\\\\\//\//g' | sed 's/[{}]//g' | awk -v k="text" '{n=split($0,a,","); for (i=1; i<=n; i++) print a[i]}' | sed 's/\"\:\"/\|/g' | sed 's/[\,]/ /g' | sed 's/\"//g' | grep -w $prop`
+    echo ${temp##*|}
+}
+
+json=`curl -H Metadata:true "http://169.254.169.254/metadata/instance?api-version=2017-08-01"`
+status=$?
+if [ $status -ne 0 ]; then
+        exit $status
+fi
+
+prop='subscriptionId'
+subId=`jsonval`
+prop='resourceGroupName'
+rgname=`jsonval`
+prop='name'
+name=`jsonval`
+
+if [ ! -z $subId -a ! -z $rgname -a ! -z $name ]; then
+  temp='/subscriptions/'$subId'/resourceGroups/'$rgname'/providers/Microsoft.Compute/virtualMachines/'$name
+  final= echo $temp | awk '{print tolower($0)}'
+  printf "%s" "${final}"
+  exit 0
+fi
+
+exit 1

@@ -938,6 +938,19 @@ check_for_gcp() {
     GCP_DONE=1
 }
 
+check_for_azure() {
+    [ -n "$AZURE_DONE" ] && return
+    printf "Checking to see if this box is in Azure Virtual Machine: "
+    AZURE_UNIQUE_ID=$("${BASE_DIR}/get_azure_unique_id") || true
+    if [ -n "$AZURE_UNIQUE_ID" ]; then
+        printf "Using azure_resource_id: %s\n" "${AZURE_UNIQUE_ID}"
+        EXTRA_DIMS="?sfxdim_azure_resource_id=${AZURE_UNIQUE_ID}"
+    else
+        printf "NOT in Azure Virtual Machine\n"
+    fi
+    AZURE_DONE=1
+}
+
 check_for_dimensions() {
     [ -n "$DIM_DONE" ] && return
     if [ -n "$dimensions" ]; then
@@ -970,6 +983,7 @@ install_plugin_common() {
     fi
     check_for_aws
     check_for_gcp
+    check_for_azure
     check_for_dimensions
 }
 
