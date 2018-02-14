@@ -4,7 +4,7 @@
 # get_azure_unique_id: prints a unique id for an Azure VM suitable for use with SignalFx.
 # exits with 0 if the unique id was generated succesfully
 # exits with 1 if the curl for data succeeded but the parsing of the information failed.
-# exits with 28 if there was a timeout talking to AWS to get information
+# exits with 28 if there was a timeout talking to Azure to get information
 # all other exit codes come from curl
 #
 
