@@ -9,7 +9,8 @@
 #
 
 jsonval () {
-    temp=`echo $json | sed 's/\\\\\//\//g' | sed 's/[{}]//g' | awk -v k="text" '{n=split($0,a,","); for (i=1; i<=n; i++) print a[i]}' | sed 's/\"\:\"/\|/g' | sed 's/[\,]/ /g' | sed 's/\"//g' | grep -w $prop`
+    temp=`echo $json | sed 's/\\\\\//\//g' | sed 's/[{}]//g' | awk -v k="text" '{n=split($0,a,","); for (i=1; i<=n; i++) print a[i]}' | sed 's/\"\:\
+"/\|/g' | sed 's/[\,]/ /g' | sed 's/\"//g' | grep -w $1`
     echo ${temp##*|}
 }
 
@@ -19,17 +20,14 @@ if [ $status -ne 0 ]; then
         exit $status
 fi
 
-prop='subscriptionId'
-subId=`jsonval`
-prop='resourceGroupName'
-rgname=`jsonval`
-prop='name'
-name=`jsonval`
+subId=$(jsonval "subscriptionId")
+rgname=$(jsonval "resourceGroupName")
+name=$(jsonval "name")
 
 if [ ! -z $subId -a ! -z $rgname -a ! -z $name ]; then
-  temp='/subscriptions/'$subId'/resourceGroups/'$rgname'/providers/Microsoft.Compute/virtualMachines/'$name
+  temp=$subId'/'$rgname'/Microsoft.Compute/virtualMachines/'$name
   final= echo $temp | awk '{print tolower($0)}'
-  printf "%s" "${final}"
+  printf "%s" "${final}" | cut -c 1-256
   exit 0
 fi
 
