@@ -14,7 +14,7 @@ jsonval () {
     echo ${temp##*|}
 }
 
-json=`curl -H Metadata:true "http://169.254.169.254/metadata/instance?api-version=2017-08-01"`
+json=$(curl --connect-timeout 5 -H Metadata:true "http://169.254.169.254/metadata/instance?api-version=2017-08-01")
 status=$?
 if [ $status -ne 0 ]; then
         exit $status
