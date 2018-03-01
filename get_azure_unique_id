@@ -24,7 +24,7 @@ subId=$(jsonval "subscriptionId")
 rgname=$(jsonval "resourceGroupName")
 name=$(jsonval "name")
 
-if [ ! -z $subId -a ! -z $rgname -a ! -z $name ]; then
+if [[ ! -z $subId && ! -z $rgname && ! -z $name ]]; then
   temp=$subId'/'$rgname'/microsoft.compute/virtualmachines/'$name
   final= echo $temp | awk '{print tolower($0)}'
   printf "%s" "${final}" | cut -c 1-256
