@@ -10,7 +10,7 @@ for x in signalfx-metadata/10-signalfx.conf collectd-write_http/10-write_http-pl
 	curl -sSL "https://raw.githubusercontent.com/signalfx/integrations/master/${x}" > `basename $x`
 done
 
-tar -cvzf install-files.tgz *.conf collectd.conf.tmpl get_aws_unique_id get_gcp_unique_id get_all_auth_tokens.py
+tar -cvzf install-files.tgz *.conf collectd.conf.tmpl get_aws_unique_id get_gcp_unique_id get_azure_unique_id get_all_auth_tokens.py
 
 if ! [ -z $BUILD_PUBLISH ] && [ $BUILD_PUBLISH = True ]; then
 	aws s3 cp install.sh s3://public-downloads--signalfuse-com/collectd-install-test --cache-control="max-age=0, no-cache"
