@@ -20,9 +20,9 @@ if [ $status -ne 0 ]; then
         exit $status
 fi
 
-subId=$(jsonval "subscriptionId")
-rgname=$(jsonval "resourceGroupName")
-name=$(jsonval "name")
+subId="$(jsonval "subscriptionId")"
+rgname="$(jsonval "resourceGroupName")"
+name="$(jsonval "name")"
 
 if [[ ! -z $subId && ! -z $rgname && ! -z $name ]]; then
   temp=$subId'/'$rgname'/microsoft.compute/virtualmachines/'$name
