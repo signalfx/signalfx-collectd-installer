@@ -216,6 +216,24 @@ parse_args_wrapper() {
     export sudo
 }
 
+check_for_debian_dependencies(){
+    dependenciesNeeded=""
+    if [ "$(which gpg)" == "" ] && [ "$(which gpg2)" == "" ]; then
+        dependenciesNeeded="gpg or gpg2"
+    fi
+    if [ "$(which dirmngr)" == "" ]; then
+        if [ -z "dependenciesNeeded" ]; then
+            dependenciesNeeded="dirmngr"
+        else
+            dependenciesNeeded="$dependenciesNeeded dirmngr"
+        fi
+    fi
+    if [ ! -z "$dependenciesNeeded" ]; then
+        printf "You must have %s installed to add the SignalFx repo keys\n" "$dependenciesNeeded"
+        exit 9
+    fi
+}
+
 check_for_running_collectd(){
     count_running_collectd_instances=$(pgrep -x collectd | wc -l)
     if [ "$count_running_collectd_instances" -ne 0 ]; then
@@ -512,11 +530,7 @@ install_debian_collectd_procedure() {
         #Adding signalfx repo
         printf "Getting SignalFx collectd package\n"
         if [ "$debian_distribution_name" == "wheezy" ] || [ "$debian_distribution_name" == "jessie" ] || [ "$debian_distribution_name" == "stretch" ]; then
-            if [ "$(which gpg)" == "" ] && [ "$(which gpg2)" == "" ]; then
-              printf "You must have gpg or gpg2 installed to add the SignalFx repo keys\n"
-              exit 9
-            fi
-
+            check_for_debian_dependencies
             $sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys $signalfx_public_key_id
             echo "deb ${repo_link} /" | $sudo tee /etc/apt/sources.list.d/signalfx_collectd.list > /dev/null
         else
@@ -787,6 +801,7 @@ install_debian_collectd_plugin_procedure() {
         #Adding signalfx repo
         printf "Getting SignalFx collectd package\n"
         if [ "$debian_distribution_name" == "wheezy" ] || [ "$debian_distribution_name" == "jessie" ] || [ "$debian_distribution_name" == "stretch" ]; then
+            check_for_debian_dependencies
             $sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys $signalfx_public_key_id
             echo "deb ${repo_link} /" | $sudo tee /etc/apt/sources.list.d/signalfx_collectd_plugin-${stage}-${debian_distribution_name}.list > /dev/null
         else
