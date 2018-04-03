@@ -222,7 +222,7 @@ check_for_debian_dependencies(){
         dependenciesNeeded="(gpg or gpg2)"
     fi
     if [ "$(which dirmngr)" == "" ]; then
-        if [ -z "dependenciesNeeded" ]; then
+        if [ -z "$dependenciesNeeded" ]; then
             dependenciesNeeded="dirmngr"
         else
             dependenciesNeeded="$dependenciesNeeded and dirmngr"
