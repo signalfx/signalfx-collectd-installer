@@ -221,16 +221,14 @@ check_for_debian_dependencies(){
     if [ "$(which gpg)" == "" ] && [ "$(which gpg2)" == "" ]; then
         dependenciesNeeded="(gpg or gpg2)"
     fi
-    if [ "$(which dirmngr)" == "" ]; then
-        if [ -z "$dependenciesNeeded" ]; then
-            dependenciesNeeded="dirmngr"
-        else
-            dependenciesNeeded="$dependenciesNeeded and dirmngr"
-        fi
-    fi
     if [ ! -z "$dependenciesNeeded" ]; then
         printf "You must have the following installed to add the SignalFx repo keys [%s]\n" "$dependenciesNeeded"
         exit 9
+    fi
+    # ensure that dirmngr is installed with gpg2
+    if [ -z "$(which dirmngr)" ] && [ ! -z "$(which gpg2)" ]; then
+        printf "Installing needed dependency: dirmngr"
+        $sudo apt-get -y install dirmngr
     fi
 }
 
