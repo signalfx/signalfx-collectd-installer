@@ -341,36 +341,40 @@ assign_needed_os() {
         3)
             hostOS="Amazon Linux (all versions 2014.09 and newer)"
         ;;
-        #Ubuntu 16.04
+        #Ubuntu 18.04
         4)
+            hostOS="Ubuntu 18.04"
+        ;;
+        #Ubuntu 16.04
+        5)
             hostOS="Ubuntu 16.04"
         ;;
         #Ubuntu 15.04
-        5)
+        6)
             hostOS="Ubuntu 15.04"
         ;;
         #Ubuntu 14.04
-        6)
+        7)
             hostOS="Ubuntu 14.04.1 LTS"
         ;;
         #Ubuntu 12.04
-        7)
+        8)
             hostOS="Ubuntu 12.04"
         ;;
         #Debian GNU/Linux 7 (wheezy)
-        8)
+        9)
             hostOS="Debian GNU/Linux 7"
         ;;
         #Debian GNU/Linux 8 (jessie)
-        9)
+        10)
             hostOS="Debian GNU/Linux 8"
         ;;
         #Debian GNU/Linux 8 (stretch)
-        10)
+        11)
             hostOS="Debian GNU/Linux 9"
         ;;
         #Mac OSX
-        11)
+        12)
             hostOS="Mac OS X"
         ;;
         *)
@@ -381,10 +385,10 @@ assign_needed_os() {
 
 #Validate the users input
 validate_os_input() {
-if [[ "$selection" =~ ^[0-9]+$ ]] && [[ "$selection" -ge 1 && "$selection" -le 10 ]]
+if [[ "$selection" =~ ^[0-9]+$ ]] && [[ "$selection" -ge 1 && "$selection" -le 12 ]]
     then
         assign_needed_os
-elif [ "$selection" == 11 ];
+elif [ "$selection" == 13 ];
     then
         printf "\nWe currently do not support any other Linux distribution with our collectd packages.
 Please visit https://support.signalfx.com/hc/en-us/articles/201094025-Use-collectd for detailed
@@ -393,7 +397,7 @@ elif [ "$selection" == 0 ];
     then
         printf "\nGood Bye!" && exit 0
 else
-    printf "\nInvalid user input please make a Distribution selection of 1 through 8.
+    printf "\nInvalid user input please make a Distribution selection of 1 through 12.
 Enter your Selection: "
     read -r selection < /dev/tty
     validate_os_input
@@ -408,15 +412,16 @@ Please enter the number of the OS you wish to install for:
 1.  RHEL/Centos 7
 2.  RHEL/Centos 6.x
 3.  Amazon Linux (all versions 2014.09 and newer)
-4.  Ubuntu 16.04
-5.  Ubuntu 15.04
-6.  Ubuntu 14.04
-7.  Ubuntu 12.04
-8.  Debian GNU/Linux 7
-9.  Debian GNU/Linux 8
-10. Debian GNU/Linux 9
-11. Mac OS X
-12. Other
+4.  Ubuntu 18.04
+5.  Ubuntu 16.04
+6.  Ubuntu 15.04
+7.  Ubuntu 14.04
+8.  Ubuntu 12.04
+9.  Debian GNU/Linux 7
+10. Debian GNU/Linux 8
+11. Debian GNU/Linux 9
+12. Mac OS X
+13. Other
 0.  Exit
 Enter your Selection: "
 	read -r selection < /dev/tty
@@ -578,7 +583,7 @@ perform_install_for_os() {
             install_rpm_collectd_procedure
             install_rpm_plugin_procedure
         ;;
-        "Amazon Linux AMI"*)
+        "Amazon Linux"*)
             needed_rpm=$aws_linux
             needed_rpm_name=$aws_linux_rpm
             needed_plugin_rpm=$aws_linux_plugin
@@ -587,6 +592,14 @@ perform_install_for_os() {
             confirm
             install_rpm_collectd_procedure
             install_rpm_plugin_procedure
+        ;;
+        "Ubuntu 18.04"*)
+            needed_package_name=software-properties-common
+            printf "Install will proceed for %s\n" "$hostOS"
+            debian_distribution_name="bionic"
+            confirm
+            install_debian_collectd_procedure
+            install_debian_collectd_plugin_procedure
         ;;
         "Ubuntu 16.04"*)
             needed_package_name=software-properties-common
