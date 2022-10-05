@@ -378,7 +378,7 @@ assign_needed_os() {
             hostOS="Mac OS X"
         ;;
         *)
-        printf "error occurred. Exiting. Please contact support@signalfx.com\n" && exit 0
+        printf "error occurred. Exiting. Please contact signalfx-support@splunk.com\n" && exit 0
         ;;
     esac
 }
@@ -392,7 +392,7 @@ elif [ "$selection" == 13 ];
     then
         printf "\nWe currently do not support any other Linux distribution with our collectd packages.
 Please visit https://support.signalfx.com/hc/en-us/articles/201094025-Use-collectd for detailed
-instructions on how to install collectd for various Linux distributions or contact support@signalfx.com\n" && exit 0
+instructions on how to install collectd for various Linux distributions or contact signalfx-support@splunk.com\n" && exit 0
 elif [ "$selection" == 0 ];
     then
         printf "\nGood Bye!" && exit 0
